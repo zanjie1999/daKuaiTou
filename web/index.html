@@ -348,9 +348,9 @@
                         <select id="framesize" class="default-action">
                             <option value="10">UXGA(1600x1200)</option>
                             <option value="9">SXGA(1280x1024)</option>
-                            <option value="8">XGA(1024x768)</option>
+                            <option value="8" selected="selected">XGA(1024x768)</option>
                             <option value="7">SVGA(800x600)</option>
-                            <option value="6" selected="selected">VGA(640x480)</option>
+                            <option value="6">VGA(640x480)</option>
                             <option value="5">CIF(400x296)</option>
                             <option value="4">QVGA(320x240)</option>
                             <option value="3">HQVGA(240x176)</option>
@@ -360,7 +360,7 @@
                     <div class="input-group" id="quality-group">
                         <label for="quality">Quality</label>
                         <div class="range-min">10</div>
-                        <input type="range" id="quality" min="10" max="63" value="10" class="default-action">
+                        <input type="range" id="quality" min="10" max="63" value="20" class="default-action">
                         <div class="range-max">63</div>
                     </div>
                     <div class="input-group" id="brightness-group">
@@ -459,7 +459,7 @@
                     <div class="input-group" id="gainceiling-group">
                         <label for="gainceiling">Gain Ceiling</label>
                         <div class="range-min">2x</div>
-                        <input type="range" id="gainceiling" min="0" max="6" value="0" class="default-action">
+                        <input type="range" id="gainceiling" min="0" max="6" value="2" class="default-action">
                         <div class="range-max">128x</div>
                     </div>
                     <div class="input-group" id="bpc-group">
@@ -490,7 +490,7 @@
                             <label class="slider" for="lenc"></label>
                         </div>
                     </div>
-                    <div class="input-group" id="hmirror-group">
+                    <!-- <div class="input-group" id="hmirror-group">
                         <label for="hmirror">H-Mirror</label>
                         <div class="switch">
                             <input id="hmirror" type="checkbox" class="default-action" checked="checked">
@@ -503,7 +503,7 @@
                             <input id="vflip" type="checkbox" class="default-action" checked="checked">
                             <label class="slider" for="vflip"></label>
                         </div>
-                    </div>
+                    </div> -->
                     <div class="input-group" id="dcw-group">
                         <label for="dcw">DCW (Downsize EN)</label>
                         <div class="switch">
@@ -511,13 +511,13 @@
                             <label class="slider" for="dcw"></label>
                         </div>
                     </div>
-                    <div class="input-group" id="colorbar-group">
+                    <!-- <div class="input-group" id="colorbar-group">
                         <label for="colorbar">Color Bar</label>
                         <div class="switch">
                             <input id="colorbar" type="checkbox" class="default-action">
                             <label class="slider" for="colorbar"></label>
                         </div>
-                    </div>
+                    </div> -->
                     <div class="input-group" id="face_detect-group">
                         <label for="face_detect">Face Detection</label>
                         <div class="switch">
@@ -533,9 +533,10 @@
                         </div>
                     </div>
                     <section id="buttons">
+                        <button id="face_enroll" class="disabled" disabled="disabled">Face</button>
                         <button id="get-still">拍照</button>
-                        <button id="toggle-stream">打开视频</button>
-                        <button id="face_enroll" class="disabled" disabled="disabled">标记人脸</button>
+                        <button id="toggle-stream">视频</button>
+                        <button id="take-photo">存图</button>
                     </section>
                 </nav>
             </div>
@@ -545,6 +546,15 @@
                     <img id="stream" src="">
                 </div>
             </figure>
+            <!-- <figure>
+                <button id="goLF">LF</button>
+                <button id="goF">F</button>
+                <button id="goRF">RF</button>
+                <br>
+                <button id="goLB">LB</button>
+                <button id="goB">B</button>
+                <button id="goRB">RB</button>
+            </figure> -->
         </div>
     </section>
     <script>
@@ -655,16 +665,17 @@
             const streamButton = document.getElementById('toggle-stream')
             const enrollButton = document.getElementById('face_enroll')
             const closeButton = document.getElementById('close-stream')
+            const takePhotoButton = document.getElementById('take-photo')
 
             const stopStream = () => {
                 window.stop();
-                streamButton.innerHTML = 'Start Stream'
+                streamButton.innerHTML = '视频'
             }
 
             const startStream = () => {
                 view.src = `${streamUrl}/stream`
                 show(viewContainer)
-                streamButton.innerHTML = 'Stop Stream'
+                streamButton.innerHTML = '停止'
             }
 
             // Attach actions to buttons
@@ -680,7 +691,7 @@
             }
 
             streamButton.onclick = () => {
-                const streamEnabled = streamButton.innerHTML === 'Stop Stream'
+                const streamEnabled = streamButton.innerHTML === '停止'
                 if (streamEnabled) {
                     stopStream()
                 } else {
@@ -771,8 +782,39 @@
                     disable(enrollButton)
                 }
             }
+
+            takePhotoButton.onclick = () => {
+                let a = document.createElement("a")
+                a.download = `${Date.now()}.jpg`;
+                document.body.appendChild(a)
+                a.href = `${baseHost}/capture?_cb=${Date.now()}`
+                a.target = '_parent';
+                a.click()
+                a.remove()
+            }
         })
 
+        // 上下左右
+        var keyPs = [0, 0, 0, 0]
+        document.onkeydown = function (e) {
+            e = window.event || e;
+            switch (e.keyCode) {
+                case 37: //左键
+                    keyPs[2] = 1
+                    break;
+                case 38: //向上键
+                    keyPs[0] = 1
+                    break;
+                case 39: //右键
+                    keyPs[3] = 1
+                    break;
+                case 40: //向下键
+                    keyPs[1] = 1
+                    break;
+                default:
+                    break;
+            }
+        }
     </script>
 </body>
 

@@ -1,0 +1,8 @@
+// wifi设置
+// 复制文件为wifiConfig.cpp并编辑
+
+#include <WiFiMulti.h>
+
+void wifiConfig(WiFiMulti *wifiMulti){
+    wifiMulti -> addAP("ssid", "password");
+}

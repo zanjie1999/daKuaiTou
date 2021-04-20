@@ -1,6 +1,6 @@
 #include <Arduino.h>
 #include <WiFi.h>
-#include <WiFiAP.h>
+#include <WiFiMulti.h>
 
 #include "camera_pins.h"
 #include "esp_camera.h"
@@ -13,6 +13,10 @@ const int ioB = 15;
 long lastSetLRFB = 0;
 
 void startCameraServer();
+
+void wifiConfig(WiFiMulti *wifiMulti);
+
+WiFiMulti wifiMulti;
 
 // 设置电机
 void setLRFB(bool l, bool r, bool f, bool b) {
@@ -69,6 +73,8 @@ void setup() {
     Serial.setDebugOutput(true);
     Serial.println();
 
+    WiFi.hostname("DKT");
+    WiFi.mode(WIFI_AP_STA);
     WiFi.softAP("大块头", "20050803");
 
     camera_config_t config;
@@ -118,22 +124,26 @@ void setup() {
     }
 
     sensor_t* s = esp_camera_sensor_get();
-    // 默认分辨率 保证流畅
+    // 默认分辨率 保证流畅 写vga变xga
     s->set_framesize(s, FRAMESIZE_VGA);
+    s->set_quality(s, 12);
+    s->set_gainceiling(s, GAINCEILING_4X);
 
 #if defined(CAMERA_MODEL_M5STACK_WIDE) || defined(CAMERA_MODEL_M5STACK_ESP32CAM)
     s->set_vflip(s, 1);
     s->set_hmirror(s, 1);
 #endif
 
-    // WiFi.begin(ssid, password);
+    // wifiConfig.cpp
+    wifiConfig(&wifiMulti);
 
-    // while (WiFi.status() != WL_CONNECTED) {
-    //     delay(500);
-    //     Serial.print(".");
-    // }
-    // Serial.println("");
-    // Serial.println("WiFi connected");
+    Serial.println("Connecting Wifi...");
+    if (wifiMulti.run() == WL_CONNECTED) {
+        Serial.println("");
+        Serial.println("WiFi connected");
+        Serial.println("IP address: ");
+        Serial.println(WiFi.localIP());
+    }
 
     startCameraServer();
 
