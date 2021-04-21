@@ -558,10 +558,14 @@
         </div>
     </section>
     <script>
+        var ws = new WebSocket('ws://' + document.location.origin + ':82/ws');
+        var wsUrl = 'ws://' + document.location.host + ':82/ws'
+        // var wsUrl = 'ws://192.168.1.124:82/ws'
+        var ws = new WebSocket(wsUrl);
         document.addEventListener('DOMContentLoaded', function (event) {
             var baseHost = document.location.origin
             var streamUrl = baseHost + ':81'
-
+            
             const hide = el => {
                 el.classList.add('hidden')
             }
@@ -794,27 +798,102 @@
             }
         })
 
-        // 上下左右
+        // 左右上下
         var keyPs = [0, 0, 0, 0]
-        document.onkeydown = function (e) {
+        document.onkeydown =  (e) => {
             e = window.event || e;
             switch (e.keyCode) {
                 case 37: //左键
-                    keyPs[2] = 1
-                    break;
-                case 38: //向上键
                     keyPs[0] = 1
-                    break;
+                    return false;
+                case 38: //上键
+                    keyPs[2] = 1
+                    return false;
                 case 39: //右键
-                    keyPs[3] = 1
-                    break;
-                case 40: //向下键
                     keyPs[1] = 1
-                    break;
+                    return false;
+                case 40: //下键
+                    keyPs[3] = 1
+                    return false;
                 default:
                     break;
             }
         }
+        document.onkeyup = (e) => {
+            e = window.event || e;
+            switch (e.keyCode) {
+                case 37: //左键
+                    keyPs[0] = 0
+                    return false;
+                case 38: //上键
+                    keyPs[2] = 0
+                    return false;
+                case 39: //右键
+                    keyPs[1] = 0
+                    return false;
+                case 40: //下键
+                    keyPs[3] = 0
+                    return false;
+                default:
+                    break;
+            }
+        }
+
+        // 初始化ws
+        function wsStart() {
+            ws = new WebSocket(wsUrl);
+        }
+
+        let lastLRFB = -1
+        let lockLRFB = false
+        function setLRFB(t9) {
+            // 重复的5不发                      相同的有冷却时间
+            if (!(t9 == 5 && lastLRFB == 5) && (!lockLRFB || lastLRFB != t9)) {
+                console.log('setLRFB', t9)
+                if (ws.readyState == ws.OPEN) {
+                    ws.send(t9)
+                    lockLRFB = true
+                    window.setTimeout(()=>{
+                        lockLRFB = false
+                    }, 400)
+                } else {
+                    wsStart()
+                }
+            }
+            lastLRFB = t9
+        }
+
+        // 检查按键情况
+        window.setInterval(()=>{
+            if (!(keyPs[0] || keyPs[1] || keyPs[2] || keyPs[3])) {
+                // 都没按
+                setLRFB(5)
+            } else if (keyPs[0] && keyPs[2]) {
+                // 左上
+                setLRFB(1)
+            } else if (keyPs[1] && keyPs[2]) {
+                // 右上
+                setLRFB(3)
+            } else if (keyPs[0] && keyPs[3]) {
+                // 左下
+                setLRFB(7)
+            } else if (keyPs[1] && keyPs[3]) {
+                // 右下
+                setLRFB(9)
+            } else if (keyPs[0]) {
+                // 左
+                setLRFB(4)
+            } else if (keyPs[1]) {
+                // 右
+                setLRFB(6)
+            } else if (keyPs[2]) {
+                // 上
+                setLRFB(2)
+            } else if (keyPs[3]) {
+                // 下
+                setLRFB(8)
+            }
+        }, 100)
     </script>
 </body>
 

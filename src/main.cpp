@@ -1,4 +1,6 @@
 #include <Arduino.h>
+#include <AsyncTCP.h>
+#include <ESPAsyncWebServer.h>
 #include <WiFi.h>
 #include <WiFiMulti.h>
 
@@ -17,6 +19,9 @@ void startCameraServer();
 void wifiConfig(WiFiMulti *wifiMulti);
 
 WiFiMulti wifiMulti;
+
+AsyncWebServer server(82);
+AsyncWebSocket ws("/ws");
 
 // 设置电机
 void setLRFB(bool l, bool r, bool f, bool b) {
@@ -62,6 +67,38 @@ void setLRFB(int t9) {
     }
 }
 
+void onEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len){
+  if(type == WS_EVT_CONNECT){
+    Serial.printf("ws[%s][%u] connect\n", server->url(), client->id());
+  } else if(type == WS_EVT_DISCONNECT){
+    Serial.printf("ws[%s][%u] disconnect: %u\n", server->url(), client->id());
+  } else if(type == WS_EVT_ERROR){
+    //error was received from the other end
+    Serial.printf("ws[%s][%u] error(%u): %s\n", server->url(), client->id(), *((uint16_t*)arg), (char*)data);
+  } else if(type == WS_EVT_PONG){
+    //pong message was received (in response to a ping request maybe)
+    Serial.printf("ws[%s][%u] pong[%u]: %s\n", server->url(), client->id(), len, (len)?(char*)data:"");
+  } else if(type == WS_EVT_DATA){
+    //data packet
+    AwsFrameInfo * info = (AwsFrameInfo*)arg;
+    if(info->final && info->index == 0 && info->len == len){
+      //the whole message is in a single frame and we got all of it's data
+      Serial.printf("ws[%s][%u] %s-message[%llu]: ", server->url(), client->id(), (info->opcode == WS_TEXT)?"text":"binary", info->len);
+      if(info->opcode == WS_TEXT){
+        data[len] = 0;
+        Serial.printf("%s\n", (char*)data);
+        // 控制方向  这转换还能优化下吗
+        setLRFB(String((char*)data).toInt());
+      } else {
+        for(size_t i=0; i < info->len; i++){
+          Serial.printf("%02x ", data[i]);
+        }
+        Serial.printf("\n");
+      }
+    }
+  }
+}
+
 void setup() {
     pinMode(ioL, OUTPUT);
     pinMode(ioR, OUTPUT);
@@ -99,7 +136,8 @@ void setup() {
     config.xclk_freq_hz = 20000000;
     config.pixel_format = PIXFORMAT_JPEG;
 
-    // if PSRAM IC present, init with UXGA resolution and higher JPEG quality
+    // if PSRAM IC present, init with UXGA resolution and higher JPEG
+    // quality
     //                      for larger pre-allocated frame buffer.
     if (psramFound()) {
         config.frame_size = FRAMESIZE_UXGA;
@@ -123,7 +161,7 @@ void setup() {
         return;
     }
 
-    sensor_t* s = esp_camera_sensor_get();
+    sensor_t *s = esp_camera_sensor_get();
     // 默认分辨率 保证流畅 写vga变xga
     s->set_framesize(s, FRAMESIZE_VGA);
     s->set_quality(s, 12);
@@ -146,6 +184,11 @@ void setup() {
     }
 
     startCameraServer();
+
+    // attach AsyncWebSocket
+    ws.onEvent(onEvent);
+    server.addHandler(&ws);
+    server.begin();
 
     Serial.print("Camera Ready! Use 'http://");
     Serial.print(WiFi.localIP());
