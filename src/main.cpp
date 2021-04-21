@@ -24,14 +24,34 @@ AsyncWebServer server(82);
 AsyncWebSocket ws("/ws");
 
 // 设置电机
+bool lastL = 0;
+bool lastR = 0;
 void setLRFB(bool l, bool r, bool f, bool b) {
-    digitalWrite(ioL, l);
-    digitalWrite(ioR, r);
+    if (l && !lastL) {
+        digitalWrite(ioL, 0);
+        digitalWrite(ioR, 1);
+        delay(100);
+        digitalWrite(ioL, 1);
+        digitalWrite(ioR, 0);
+    } else {
+        digitalWrite(ioL, l);
+    }
+    if (r && !lastR) {
+        digitalWrite(ioL, 1);
+        digitalWrite(ioR, 0);
+        delay(100);
+        digitalWrite(ioL, 0);
+        digitalWrite(ioR, 1);
+    } else {
+        digitalWrite(ioR, r);
+    }
+    lastL = l;
+    lastR = r;
     digitalWrite(ioF, f);
     digitalWrite(ioB, b);
     if (l || r || f || b) {
         // 超时停车
-        lastSetLRFB = millis() + 500;
+        lastSetLRFB = millis() + 550;
     }
 }
 // 手机9键数字方向
