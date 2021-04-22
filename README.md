@@ -2,8 +2,8 @@
 ## 大块头
 喜羊羊的坐骑  
 喜羊羊与灰太狼 开心方程式  
+![](https://i0.hdslb.com/bfs/archive/971cf475f26b255ec3a44d1611262adfb22eb2c6.png)  
 现以Esp32-Cam 小车重现  
-在做了 硬件进度100% 软件进度1%...
 
 ## 转换index.h
 html格式的文件在web目录下  

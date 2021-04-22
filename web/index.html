@@ -331,6 +331,16 @@
         .hidden {
             display: none
         }
+
+        .control-box {
+            position: relative;
+            display: flex;
+        }
+
+        .control-box button {
+            min-width: 7em;
+            min-height: 5em;
+        }
     </style>
 </head>
 
@@ -544,6 +554,16 @@
                 <div id="stream-container" class="image-container hidden">
                     <div class="close" id="close-stream">×</div>
                     <img id="stream" src="">
+                </div>
+                <div id="control-box" class="control-box">
+                    <button id="LF" onmousedown="controlDown(1, 0, 1, 0)" onmouseup="controlUp()">左前</button>
+                    <button id="F" onmousedown="controlDown(0, 0, 1, 0)" onmouseup="controlUp()">前</button>
+                    <button id="RF" onmousedown="controlDown(0, 1, 1, 0)" onmouseup="controlUp()">右前</button>
+                </div>
+                <div id="control-box" class="control-box">
+                    <button id="LB" onmousedown="controlDown(1, 0, 0, 1)" onmouseup="controlUp()">左后</button>
+                    <button id="B" onmousedown="controlDown(0, 0, 0, 1)" onmouseup="controlUp()">后</button>
+                    <button id="RB" onmousedown="controlDown(0, 1, 0, 1)" onmouseup="controlUp()">右后</button>
                 </div>
             </figure>
             <!-- <figure>
@@ -837,6 +857,14 @@
                 default:
                     break;
             }
+        }
+
+        // 按下按钮抬起按钮
+        function controlDown(l, r, f, b) {
+            keyPs = [l, r, f, b]
+        }
+        function controlUp() {
+            keyPs = [0, 0, 0, 0]
         }
 
         // 初始化ws
