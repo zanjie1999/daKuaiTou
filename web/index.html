@@ -337,9 +337,15 @@
             display: flex;
         }
 
-        .control-box button {
+        .control-button {
             min-width: 7em;
             min-height: 5em;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
         }
     </style>
 </head>
@@ -556,14 +562,14 @@
                     <img id="stream" src="">
                 </div>
                 <div id="control-box" class="control-box">
-                    <button id="LF" onmousedown="controlDown(1, 0, 1, 0)" onmouseup="controlUp()">左前</button>
-                    <button id="F" onmousedown="controlDown(0, 0, 1, 0)" onmouseup="controlUp()">前</button>
-                    <button id="RF" onmousedown="controlDown(0, 1, 1, 0)" onmouseup="controlUp()">右前</button>
+                    <button id="LF" class="control-button">左前</button>
+                    <button id="F" class="control-button">前</button>
+                    <button id="RF" class="control-button">右前</button>
                 </div>
                 <div id="control-box" class="control-box">
-                    <button id="LB" onmousedown="controlDown(1, 0, 0, 1)" onmouseup="controlUp()">左后</button>
-                    <button id="B" onmousedown="controlDown(0, 0, 0, 1)" onmouseup="controlUp()">后</button>
-                    <button id="RB" onmousedown="controlDown(0, 1, 0, 1)" onmouseup="controlUp()">右后</button>
+                    <button id="LB" class="control-button">左后</button>
+                    <button id="B" class="control-button">后</button>
+                    <button id="RB" class="control-button">右后</button>
                 </div>
             </figure>
             <!-- <figure>
@@ -582,10 +588,10 @@
         var wsUrl = 'ws://' + document.location.host + ':82/ws'
         // var wsUrl = 'ws://192.168.1.124:82/ws'
         var ws = new WebSocket(wsUrl);
-        document.addEventListener('DOMContentLoaded', function (event) {
+        document.addEventListener('DOMContentLoaded', (event) => {
             var baseHost = document.location.origin
             var streamUrl = baseHost + ':81'
-            
+
             const hide = el => {
                 el.classList.add('hidden')
             }
@@ -816,11 +822,45 @@
                 a.click()
                 a.remove()
             }
-        })
+        });
 
+        // 虚拟按键
+        let controlButton = document.getElementsByClassName('control-button');
+        function btmStrat () {
+            switch (this.id) {
+                case 'LF':
+                    keyPs = [1, 0, 1, 0]
+                    break
+                case 'F':
+                    keyPs = [0, 0, 1, 0]
+                    break
+                case 'RF':
+                    keyPs = [0, 1, 1, 0]
+                    break
+                case 'LB':
+                    keyPs = [1, 0, 0, 1]
+                    break
+                case 'B':
+                    keyPs = [0, 0, 0, 1]
+                    break
+                case 'RB':
+                    keyPs = [0, 1, 0, 1]
+                    break
+            }
+        }
+        function btmEnd () {
+            keyPs = [0, 0, 0, 0]
+        }
+        Array.from(controlButton).forEach((b) => {
+            b.addEventListener('touchstart', btmStrat)
+            b.addEventListener('mousedown', btmStrat)
+            b.addEventListener('touchend', btmEnd)
+            b.addEventListener('mouseup', btmEnd)
+        });
+            
         // 左右上下
         var keyPs = [0, 0, 0, 0]
-        document.onkeydown =  (e) => {
+        document.onkeydown = (e) => {
             e = window.event || e;
             switch (e.keyCode) {
                 case 37: //左键
@@ -859,21 +899,13 @@
             }
         }
 
-        // 按下按钮抬起按钮
-        function controlDown(l, r, f, b) {
-            keyPs = [l, r, f, b]
-        }
-        function controlUp() {
-            keyPs = [0, 0, 0, 0]
-        }
-
         // 初始化ws
         function wsStart() {
             ws = new WebSocket(wsUrl);
         }
 
-        let lastLRFB = -1
-        let lockLRFB = false
+        var lastLRFB = -1
+        var lockLRFB = false
         function setLRFB(t9) {
             // 重复的5不发                      相同的有冷却时间
             if (!(t9 == 5 && lastLRFB == 5) && (!lockLRFB || lastLRFB != t9)) {
@@ -881,7 +913,7 @@
                 if (ws.readyState == ws.OPEN) {
                     ws.send(t9)
                     lockLRFB = true
-                    window.setTimeout(()=>{
+                    window.setTimeout(() => {
                         lockLRFB = false
                     }, 300)
                 } else {
@@ -892,7 +924,7 @@
         }
 
         // 检查按键情况
-        window.setInterval(()=>{
+        window.setInterval(() => {
             if (!(keyPs[0] || keyPs[1] || keyPs[2] || keyPs[3])) {
                 // 都没按
                 setLRFB(5)
